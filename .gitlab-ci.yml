@@ -1,0 +1,51 @@
+stages:
+  - build
+  - test
+  - deploy
+
+variables:
+  PYTHONPATH: "$PYTHONPATH:."
+
+
+default:
+  image: python:3.9
+
+before_script:
+  - python --version
+  - pip install --upgrade pip
+  - pip install -r requirements.txt
+  - mkdir -p reports
+
+build-job:
+  stage: build
+  script:
+    - echo "Building the project..."
+
+
+# Job for testing API
+test-api:
+  stage: test
+  script:
+    - pytest --html=reports/api_report.html steps/test_api_steps.py
+  artifacts:
+    paths:
+      - reports/**
+
+# Job for testing UI
+test-ui:
+  services:
+    - name: selenium/standalone-chrome:latest
+  stage: test
+  image: python:3.9
+  script:
+    - pytest --html=reports/ui_report.html steps/test_ui_steps.py
+  artifacts:
+    paths:
+      - reports/**
+
+deploy-prod:
+  stage: deploy
+  script:
+    - echo "Deploying the project..."
+    - echo "This job deploys something from the $CI_COMMIT_BRANCH branch."
+  environment: production
